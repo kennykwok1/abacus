@@ -49,7 +49,9 @@ namespace Sungiant.Abacus
 <#@ include file="PlaneIntersectionType.t4"#>
 <#@ include file="IPackedReal.t4"#>
 <#@ include file="IPackedValue.t4"#>
+<#@ include file="HalfUtils.t4"#>
 <#@ include file="PackUtils.t4"#>
+<#@ include file="Half.t4"#>
 <#@ include file="RealMaths.t4"#>
 }
 

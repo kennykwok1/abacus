@@ -52,6 +52,148 @@ namespace Sungiant.Abacus.Tests
     public class PackUtils
     {
     }
+    /*
+    0 01111 0000000000 = 1
+    0 01111 0000000001 = 1 + 2−10 = 1.0009765625 (next biggest float after 1)
+    1 10000 0000000000 = −2
+
+    0 11110 1111111111 = 65504  (max half precision)
+
+    0 00001 0000000000 = 2−14 ≈ 6.10352 × 10−5 (minimum positive normal)
+    0 00000 1111111111 = 2−14 - 2−24 ≈ 6.09756 × 10−5 (maximum subnormal)
+    0 00000 0000000001 = 2−24 ≈ 5.96046 × 10−8 (minimum positive subnormal)
+
+    0 00000 0000000000 = 0
+    1 00000 0000000000 = −0
+
+    0 11111 0000000000 = infinity
+    1 11111 0000000000 = −infinity
+
+    0 01101 0101010101 ≈ 0.33325... ≈ 1/3 
+     */
+    [TestFixture]
+    public static class HalfUtilsTests
+    {
+        [Test]
+        public static void TestCommonValues()
+        {
+            Single testStart = 1000f;
+
+            while(testStart > -testStart)
+            {
+                TestPackToUnpack(0f, Single.Epsilon);
+
+                testStart -= 0.01f;
+            }
+        }
+
+        [Test]
+        public static void TestAllPossibleHalfValues()
+        {
+            for (UInt16 packed = UInt16.MinValue; packed < UInt16.MaxValue; ++packed)  // 0 - 65535
+            {
+                TestUnpackToPack(packed);
+            }
+        }
+
+        [Test]
+        public static void TestZero()
+        {
+            TestPackToUnpack(0f, 0f);
+        }
+
+        static void TestPackToUnpack(Single input, Single epsilon)
+        {
+            UInt16 packed = HalfUtils.Pack(input);
+            
+            Single unpacked = HalfUtils.Unpack(packed);
+            
+            Assert.AreEqual(input, unpacked, epsilon);
+        }
+
+        static void TestUnpackToPack(UInt16 input)
+        {
+            Single unpacked = HalfUtils.Unpack(input);
+
+            UInt16 packed = HalfUtils.Pack(unpacked);
+
+            Assert.AreEqual(input, packed);
+        }
+
+        static void TestIntRange(int fromInt, int toInt, int multiple)
+        { 
+            for(int testInt = fromInt; testInt <= toInt; ++testInt)
+            {
+                UInt16 packed = HalfUtils.Pack((Single) testInt );
+                int unpacked = (int) HalfUtils.Unpack(packed);
+
+                int epsilon = 0;
+                
+                if(multiple != 0)
+                {
+                    int remainder = (testInt % multiple);
+
+                    // WTF NUINT: Have to do this because nunit doesn't
+                    //            seem to understand negative episilon values:
+                    //
+                    // Expected: -4095 +/- -1
+                    // But was: -4096
+                    //
+                    epsilon = Math.Abs(remainder);
+                }
+
+                Assert.That(unpacked, Is.EqualTo( testInt ).Within( epsilon ) );
+            }
+        }
+
+        [Test]
+        public static void TestIntegerPrecision1()
+        {
+            // Integers between 0 and 2048 can be exactly represented
+            TestIntRange(0, 2048, 0); // zero is tested elsewhere
+            TestIntRange(-2048, 0, 0);
+        }
+
+        [Test]
+        public static void TestIntegerPrecision2()
+        {
+            // Integers between 2049 and 4096 round to a multiple of 2 (even number)
+            TestIntRange(2049, 4096, 2);
+            TestIntRange(-4096, -2049, 2);
+        }
+        
+        [Test]
+        public static void TestIntegerPrecision3()
+        {
+            // Integers between 4097 and 8192 round to a multiple of 4
+            TestIntRange(4097, 8192, 4);
+            TestIntRange(-8192, -4097, 4);
+        }
+        
+        [Test]
+        public static void TestIntegerPrecision4()
+        {
+            // Integers between 8193 and 16384 round to a multiple of 8
+            TestIntRange(8193, 16384, 8);
+            TestIntRange(-16384, -8193, 8);
+        }
+        
+        [Test]
+        public static void TestIntegerPrecision5()
+        {
+            // Integers between 16385 and 32768 round to a multiple of 16
+            TestIntRange(16385, 32768, 16);
+            TestIntRange(-32768, -16385, 16);
+        }
+        
+        [Test]
+        public static void TestIntegerPrecision6()
+        {
+            // Integers between 32769 and 65519 round to a multiple of 32
+            TestIntRange(32769, 65519, 32);
+            TestIntRange(-65519, -32769, 32);
+        }
+    }
 
 }
 
@@ -582,6 +724,93 @@ namespace Sungiant.Abacus.DoublePrecision.Tests
 
             Matrix44 rotation;
             Double pi; RealMaths.Pi(out pi);
+            Matrix44.CreateRotationY(pi, out rotation);
+
+            Matrix44 translation;
+            Matrix44.CreateTranslation(100, 5, 3, out translation);
+
+            Matrix44 m = rotation * scale;
+            //m = translation * m;
+			m.Translation = new Vector3(100, 5, 3);
+
+            Vector3 outScale;
+            Quaternion outRotation;
+            Vector3 outTranslation;
+
+            m.Decompose(out outScale, out outRotation, out outTranslation);
+
+			Matrix44 mat;
+            Matrix44.CreateFromQuaternion(ref outRotation, out mat);
+
+			Assert.That(outScale, Is.EqualTo(new Vector3(4, 2, 3)));
+			Assert.That(mat, Is.EqualTo(rotation));
+			Assert.That(outTranslation, Is.EqualTo(new Vector3(100, 5, 3)));
+
+		}
+	}}
+
+namespace Sungiant.Abacus.HalfPrecision.Tests
+{
+	[TestFixture]
+	public class Matrix44Tests
+	{
+		[Test]
+		public void TestTranspose_MemberFn ()
+		{
+			Matrix44 startMatrix = new Matrix44(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+			Matrix44 testMatrix = startMatrix;
+
+			Matrix44 testMatrixExpectedTranspose = new Matrix44(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
+
+			testMatrix.Transpose();
+
+			Assert.That(testMatrix, Is.EqualTo(testMatrixExpectedTranspose));
+		}
+
+		[Test]
+		public void TestTranspose_StaticFn ()
+		{
+			Matrix44 startMatrix = new Matrix44(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+			Matrix44 testMatrix = startMatrix;
+
+			Matrix44 testMatrixExpectedTranspose = new Matrix44(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
+
+			// RUN THE STATIC VERSION OF THE FUNCTION
+			Matrix44 resultMatrix = Matrix44.Identity;
+
+			Matrix44.Transpose(ref testMatrix, out resultMatrix);
+
+			Assert.That(resultMatrix, Is.EqualTo(testMatrixExpectedTranspose));
+
+		}
+
+		[Test]
+		public void CreateFromQuaternion ()
+		{
+			Half pi; RealMaths.Pi(out pi);
+
+			Quaternion q;
+			Quaternion.CreateFromYawPitchRoll(pi, pi*2, pi / 2, out q);
+
+			Matrix44 mat1;
+			Matrix44.CreateFromQuaternion(ref q, out mat1);
+
+			Matrix44 mat2;
+			Matrix44.CreateFromQuaternionOld(ref q, out mat2);
+
+			Assert.That(mat1, Is.EqualTo(mat2));
+		}
+
+		[Test]
+		public void Decompose ()
+		{
+            Matrix44 scale;
+            Matrix44.CreateScale(4, 2, 3, out scale);
+
+            Matrix44 rotation;
+            Half pi; RealMaths.Pi(out pi);
             Matrix44.CreateRotationY(pi, out rotation);
 
             Matrix44 translation;
