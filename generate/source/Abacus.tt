@@ -45,6 +45,8 @@ using System.Collections.Generic;
 
 namespace Sungiant.Abacus
 {
+<#@ include file="ContainmentType.t4"#>
+<#@ include file="PlaneIntersectionType.t4"#>
 <#@ include file="IPackedReal.t4"#>
 <#@ include file="IPackedValue.t4"#>
 <#@ include file="PackUtils.t4"#>
@@ -86,6 +88,7 @@ namespace Sungiant.Abacus.<#= type #>Precision
 {
 <#@ include file="Precision/Real/GjkDistance.t4"#>
 <#@ include file="Precision/Real/Matrix44.t4"#>
+<#@ include file="Precision/Real/Plane.t4"#>
 <#@ include file="Precision/Real/Quaternion.t4"#>
 <#@ include file="Precision/Real/Vector2.t4"#>
 <#@ include file="Precision/Real/Vector3.t4"#>
