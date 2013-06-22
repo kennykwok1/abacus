@@ -93,6 +93,7 @@ namespace Sungiant.Abacus.<#= type #>Precision
 <#@ include file="Precision/Real/Vector2.t4"#>
 <#@ include file="Precision/Real/Vector3.t4"#>
 <#@ include file="Precision/Real/Vector4.t4"#>
+<#@ include file="Precision/Real/Ray.t4"#>
 }
 
 <# } #>
