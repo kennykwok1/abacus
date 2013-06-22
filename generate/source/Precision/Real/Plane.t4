@@ -171,6 +171,52 @@
 			return ((this.Normal.X * value.X) + (this.Normal.Y * value.Y)) + (this.Normal.Z * value.Z);
 		}
 
+		public PlaneIntersectionType Intersects (ref BoundingBox box)
+		{
+			<#= type #> zero = 0;
+
+			Vector3 vector;
+			Vector3 vector2;
+			vector2.X = (this.Normal.X >= zero) ? box.Min.X : box.Max.X;
+			vector2.Y = (this.Normal.Y >= zero) ? box.Min.Y : box.Max.Y;
+			vector2.Z = (this.Normal.Z >= zero) ? box.Min.Z : box.Max.Z;
+			vector.X = (this.Normal.X >= zero) ? box.Max.X : box.Min.X;
+			vector.Y = (this.Normal.Y >= zero) ? box.Max.Y : box.Min.Y;
+			vector.Z = (this.Normal.Z >= zero) ? box.Max.Z : box.Min.Z;
+			<#= type #> num = ((this.Normal.X * vector2.X) + (this.Normal.Y * vector2.Y)) + (this.Normal.Z * vector2.Z);
+			if ((num + this.D) > zero) {
+				return PlaneIntersectionType.Front;
+			} else {
+				num = ((this.Normal.X * vector.X) + (this.Normal.Y * vector.Y)) + (this.Normal.Z * vector.Z);
+				if ((num + this.D) < zero) {
+					return PlaneIntersectionType.Back;
+				} else {
+					return PlaneIntersectionType.Intersecting;
+				}
+			}
+		}
+
+		public PlaneIntersectionType Intersects (ref BoundingFrustum frustum)
+		{
+			if (null == frustum) {
+				throw new ArgumentNullException ("frustum - NullNotAllowed");
+			}
+			return frustum.Intersects (ref this);
+		}
+
+		public PlaneIntersectionType Intersects (ref BoundingSphere sphere)
+		{
+			<#= type #> num2 = ((sphere.Center.X * this.Normal.X) + (sphere.Center.Y * this.Normal.Y)) + (sphere.Center.Z * this.Normal.Z);
+			<#= type #> num = num2 + this.D;
+			if (num > sphere.Radius) {
+				return PlaneIntersectionType.Front;
+			} else if (num < -sphere.Radius) {
+				return PlaneIntersectionType.Back;
+			} else {
+				return PlaneIntersectionType.Intersecting;
+			}
+		}
+
 		public static Boolean operator == (Plane lhs, Plane rhs)
 		{
 			return lhs.Equals (rhs);

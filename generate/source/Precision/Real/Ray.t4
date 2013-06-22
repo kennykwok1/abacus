@@ -56,6 +56,27 @@
 		}
 
 		// At what distance from it's starting position does this ray
+		// intersect the given box.  Returns null if there is no
+		// intersection.
+		public <#= type #>? Intersects (ref BoundingBox box)
+		{
+			return box.Intersects (ref this);
+		}
+
+		// At what distance from it's starting position does this ray
+		// intersect the given frustum.  Returns null if there is no
+		// intersection.
+		public <#= type #>? Intersects (ref BoundingFrustum frustum)
+		{
+			if (frustum == null)
+			{
+				throw new ArgumentNullException ();
+			}
+
+			return frustum.Intersects (ref this);
+		}
+
+		// At what distance from it's starting position does this ray
 		// intersect the given plane.  Returns null if there is no
 		// intersection.
 		public <#= type #>? Intersects (ref Plane plane)
@@ -86,6 +107,45 @@
 			}
 
 			return new <#= type #>? (num);
+		}
+
+		// At what distance from it's starting position does this ray
+		// intersect the given sphere.  Returns null if there is no
+		// intersection.
+		public <#= type #>? Intersects (ref BoundingSphere sphere)
+		{
+			<#= type #> zero = 0;
+
+			<#= type #> initialXOffset = sphere.Center.X - this.Position.X;
+
+			<#= type #> initialYOffset = sphere.Center.Y - this.Position.Y;
+			
+			<#= type #> initialZOffset = sphere.Center.Z - this.Position.Z;
+			
+			<#= type #> num7 = ((initialXOffset * initialXOffset) + (initialYOffset * initialYOffset)) + (initialZOffset * initialZOffset);
+
+			<#= type #> num2 = sphere.Radius * sphere.Radius;
+
+			if (num7 <= num2)
+			{
+				return zero;
+			}
+
+			<#= type #> num = ((initialXOffset * this.Direction.X) + (initialYOffset * this.Direction.Y)) + (initialZOffset * this.Direction.Z);
+			if (num < zero)
+			{
+				return null;
+			}
+			
+			<#= type #> num6 = num7 - (num * num);
+			if (num6 > num2)
+			{
+				return null;
+			}
+			
+			<#= type #> num8 = RealMaths.Sqrt ((num2 - num6));
+
+			return new <#= type #>? (num - num8);
 		}
 
 		public static Boolean operator == (Ray a, Ray b)
